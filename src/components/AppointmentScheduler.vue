@@ -57,40 +57,46 @@
             </v-stepper-content>
             <v-stepper-step step="3" complete editable v-bind:complete="e6 > 3">Share your contact information with us and we 'll send you a reminder</v-stepper-step>
             <v-stepper-content step="3">
-              <v-form v-model="valid" ref="form" lazy-validation>
-              <v-text-field name="firstname" label="First Name" value=""  v-model="firstname" :rules="firstnameRules" :counter="15" required/>
-              <v-text-field name="lastname" label="Last Name"  v-model="lastname" :rules="lastnameRules" :counter="15" required/>
-              <v-text-field name="email" label="Email" v-model="email":rules="emailRules" required/>
-              <v-text-field name="phone" label="Phone" v-model="phone":rules="phoneRules" required/>
-                <v-dialog v-model = "dialog" persistent max-width ="750">
-                <v-btn block color="primary" dark slot="activator">SCHEDULE</v-btn>
-                <v-card>
-                  <div v-for="user in userArray">
-                  <v-flex xs12 sm6 md4>
-                    <span>Firstname: {{user.firstname}}</span>
-                  </v-flex>
-                  <v-flex xs12 sm6 md4>
-                    <span>Lastname: {{user.lastname}}</span>
-                  </v-flex>
-                  <v-flex xs12 sm6 md4>
-                    <span>Email: {{user.email}}</span>
-                  </v-flex>
-                  <v-flex xs12 sm6 md4>
-                    <span>Phone: {{user.phone}}</span>
-                  </v-flex>
-                </div>
-                  <v-card-actions>
-                     <v-spacer></v-spacer>
-                     <v-btn color="blue darken-1" flat @click.native="dialog = false" @click="submit">Confirm</v-btn>
-                   </v-card-actions>
-              </v-card>
-            </v-dialog>
+              <form  ref="form">
 
-              </v-form>
+              <v-text-field name="firstname" label="First Name" v-model="firstname" v-validate ="'required|alpha'" />
+              <span v-show="errors.has('firstname')" class="help is-danger">{{ errors.first('firstname') }}</span>
+
+              <v-text-field name="lastname" label="Last Name"  v-model="lastname" v-validate ="'required|alpha'"/>
+              <span v-show="errors.has('lastname')" class="help is-danger">{{ errors.first('lastname') }}</span>
+
+              <v-text-field name="email" label="Email" v-model="email" v-validate="'required|email'" />
+              <span v-show="errors.has('email')" class="help is-danger">{{ errors.first('email') }}</span>
+
+              <v-text-field name="phone" label="Phone" v-model="phone" v-validate="'required|numeric'" />
+                <span v-show="errors.has('phone')" class="help is-danger">{{ errors.first('phone') }}</span>
+                <v-spacer></v-spacer>
+              <v-btn block color="primary"@click ="submit">SCHEDULE</v-btn>
+            </form>
+            <v-dialog v-model = "dialog" persistent max-width ="750">
+              <v-card>
+                <div v-for="user in userArray">
+                <v-flex xs12 sm6 md4>
+                  <span>Firstname: {{user.email}}</span>
+                </v-flex>
+                <v-flex xs12 sm6 md4>
+                  <span>Lastname: {{user.firstname}}</span>
+                </v-flex>
+                <v-flex xs12 sm6 md4>
+                  <span>Email: {{user.lastname}}</span>
+                </v-flex>
+                <v-flex xs12 sm6 md4>
+                  <span>Phone: {{user.phone}}</span>
+                </v-flex>
+              </div>
+                <v-card-actions>
+                   <v-spacer></v-spacer>
+                   <v-btn color="blue darken-1" flat @click.native="dialog = false">Confirm</v-btn>
+                 </v-card-actions>
+            </v-card>
+          </v-dialog>
             </v-stepper-content>
           </v-stepper>
-
-
         </v-card>
 
       </v-flex>
@@ -105,7 +111,6 @@ export default {
   name: 'AppointmentScheduler',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App',
       date: null,
       time: null,
       modal: null,
@@ -114,33 +119,18 @@ export default {
       ex8: null,
       e6: null,
       e1: null,
-      userArray: [],
+      userArray: {},
       allowedDates: null,
       select: null,
       selected: null,
       ok: null,
       collapsed: null,
-      valid: null,
+      valid: false,
+      confirm: null,
       firstname: '',
-      firstnameRules: [
-        (v) => !!v || 'First Name is required',
-        (v) => v.length <= 15 || 'First Name must be less than 15 characters'
-      ],
       lastname: '',
-      lastnameRules: [
-        (v) => !!v || 'Last Name is required',
-        (v) => v.length <= 15 || 'Last Name must be less than 15 characters'
-      ],
       email: '',
-      emailRules: [
-        (v) => !!v || 'E-mail is required',
-        (v) => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'E-mail must be valid'
-      ],
       phone: '',
-      phoneRules: [
-        (v) => !!v || 'Phone number is required',
-        (v) => /^(1\s|1|)?((\(\d{3}\))|\d{3})(-|\s)?(\d{3})(-|\s)?(\d{4})$/.test(v) || 'Phone number must be valid'
-      ],
       items: [
         { text: 'AM' },
         { text: 'PM' }
@@ -181,8 +171,15 @@ export default {
       console.log('Time for appointment:', this.selected)
     },
     submit () {
-      this.$validator.validateAll()
-      this.userArray = {'firstname': this.firstname, 'lastname': this.lastname, 'email': this.email, 'phone': this.phone}
+      this.$validator.validateAll().then((result) => {
+        if (result) {
+          console.log('firstname value:', this.firstname)
+          this.userArray = [{firstname: this.firstname, lastname: this.lastname, email: this.email, phone: this.phone}]
+          console.log('user value:', this.userArray)
+          this.dialog = true
+          return
+        }alert('Correct them errors!')
+      })
     }
   }
 }
